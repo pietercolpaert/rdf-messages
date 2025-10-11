@@ -1,0 +1,66 @@
+<pre class='metadata'>
+Title: RDF Messages
+Shortname: RDF-M
+Level: 1
+Status: LS
+Markup Shorthands: markdown yes
+URL: https://www.pieter.pm/rdf-messages
+Editor: Pieter Colpaert, https://pietercolpaert.be
+Repository: https://github.com/pietercolpaert/rdf-messages
+Abstract: Concepts and abstract data model for RDF Messages
+</pre>
+
+# Introduction # {#introduction}
+
+An <dfn>RDF Message</dfn> is an [RDF Dataset](https://www.w3.org/TR/rdf12-concepts/#dfn-rdf-dataset) that is intended to be interpreted atomically as a single communicative act.
+
+Note: while no formal restrictions on the size of an RDF Message is defined, they are intended to be kept rather small and actionable.
+
+<figure>
+<pre class="example" highlight="turtle">
+```turtle
+ex:like-1 a as:Like ;
+  as:object ex:blogpost-1 ;
+  as:actor <https://pietercolpaert.be/#me> .
+```
+</pre>
+<figcaption>Example of a message using the [[!activitystreams-vocabulary]] vocabulary.</figcaption>
+</figure>
+
+Note: You cannot refer to a specific RDF Message, you can only understand the quads belong together. You can however refer to entities defined within the message, such as to `ex:like-1` in the example above.
+
+An <dfn>RDF Stream</dfn> is an organizational context that carries [=RDF Messages=].
+
+<dfn>Stream consumers</dfn> listen in on the stream using a stream protocol.
+
+<dfn>Stream providers</dfn> make available a stream using a stream protocol.
+
+An <dfn>RDF Stream Log</dfn> is a collection of [=RDF Messages=] that can be serialized and de-serialized as an [=RDF Stream=].
+
+<figure>
+<pre class="example" highlight="turtle">
+```turtle
+---message 1 defines the context---
+ex:Stream1 a ex:Dataset;
+   rdfs:comment "A log of messages that appeared on a stream" .
+---the next message is an observation in the stream---
+ex:Observation1 a sosa:Observation ;
+                sosa:resultTime "2026-01-01T00:00:00Z"^^xsd:dateTime ;
+                sosa:hasSimpleResult "..." .
+---
+```
+</pre>
+<figcaption>Example of an [=RDF Stream Log=] publishing the [=RDF Messages=] that appeared in a stream so far.</figcaption>
+</figure>
+
+# Transporting RDF Stream logs # {#serializing}
+
+RDF Messages can be sent using streaming technologies such as gRPC, WebSockets, ...
+An RDF Message can also be seen as the payload of an HTTP POST request or the response from an HTTP GET request.
+When no explicit indication of a message is given, the full set of quads is considered to be one RDF Message.
+
+This specification is a proposal to extend the RDF data model, as well as its serializations, so that one even
+
+# Types of streams # {#types}
+
+TODO: check out StaX and refer to it https://rdf-stax.github.io/dev/ontology/
