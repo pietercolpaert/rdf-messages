@@ -7,7 +7,7 @@ This proposal introduces an extra concept called RDF messages, so that quads can
 
 ## Build the spec
 
-We use bikeshed:
+We use bikeshed with [pipx](https://pipx.pypa.io/stable/):
 
 ```bash
 pipx run bikeshed spec index.bs
