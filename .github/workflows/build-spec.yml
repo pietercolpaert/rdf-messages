@@ -1,3 +1,13 @@
+name: LDES Specification Build
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ["*"]
+
+  workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
