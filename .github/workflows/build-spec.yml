@@ -1,4 +1,4 @@
-name: LDES Specification Build
+name: RDF-M Specification Build
 
 on:
   pull_request:

@@ -17,13 +17,13 @@ An <dfn>RDF Message</dfn> is an [RDF Dataset](https://www.w3.org/TR/rdf12-concep
 Note: While no formal restrictions on the size of an RDF Message is defined, they are intended to be kept rather small and actionable.
 
 <figure>
-<pre class="example" highlight="turtle">
+<div class="example" highlight="turtle">
 ```turtle
 ex:like-1 a as:Like ;
   as:object ex:blogpost-1 ;
   as:actor <https://pietercolpaert.be/#me> .
 ```
-</pre>
+</div>
 <figcaption>Example of a message using the [[!activitystreams-vocabulary]] vocabulary.</figcaption>
 </figure>
 
@@ -41,7 +41,7 @@ An <dfn>RDF Message Log</dfn> is an ordered collection of [=RDF Messages=].
 The log can be serialized from an [=RDF Message Stream=], and/or deserialized into an [=RDF Message Stream=].
 
 <figure>
-<pre class="example" highlight="turtle">
+<div class="example" highlight="turtle">
 ```turtle
 ---a message 1 defining the context---
 ex:Stream1 a ex:Dataset; rdfs:comment "A log of messages that appeared on a stream" .
@@ -49,7 +49,7 @@ ex:Stream1 a ex:Dataset; rdfs:comment "A log of messages that appeared on a stre
 ex:Observation1 a sosa:Observation ; sosa:resultTime "2026-01-01T00:00:00Z"^^xsd:dateTime ; sosa:hasSimpleResult "..." .
 ---
 ```
-</pre>
+</div>
 <figcaption>Example of an [=RDF Message Log=] publishing the [=RDF Messages=] that appeared in a stream so far.</figcaption>
 </figure>
 
@@ -87,7 +87,7 @@ However, without the concept of [=RDF Messages=], the semantics of the communica
 ## Example: SPARQL CONSTRUCT would benefit from an RDF Message Log ## {#sparql-construct-messages}
 
 <figure>
-<pre class="example" highlight="sparql">
+<div class="example" highlight="sparql">
 ```sparql
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -111,7 +111,7 @@ CONSTRUCT {
   }
 } LIMIT 1000
 ```
-</pre>
+</div>
 <figcaption>If the query engine would support RDF message logs to indicate that groups of triples are part of a certain result, it would speed up clients.</figcaption>
 </figure>
 
