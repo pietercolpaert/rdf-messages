@@ -1,8 +1,6 @@
 # RDF messages
 
-The RDF data model defines the concept of a statement with a subject, predicate, object and context.
-
-This proposal introduces an extra concept called RDF messages, so that quads can be grouped together as an atomical unit.
+This proposal introduces an extra concept on top of RDF, called RDF messages, so that quads can be grouped together as an atomical unit.
 
 
 ## Build the spec
