@@ -16,9 +16,14 @@ An <dfn>RDF Message</dfn> is an [RDF Dataset](https://www.w3.org/TR/rdf12-concep
 
 Note: While no formal restrictions on the size of an RDF Message is defined, they are intended to be kept rather small and actionable.
 
+Issue: What is the scope of blank nodes, and more broadly, do we want to define the semantics of RDF Messages? This was never done for named graphs in RDF1.1.
+
 <figure>
 <div class="example" highlight="turtle">
 ```turtle
+PREFIX as: <https://www.w3.org/ns/activitystreams#>
+PREFIX ex: <http://example.org/>
+
 ex:like-1 a as:Like ;
   as:object ex:blogpost-1 ;
   as:actor <https://pietercolpaert.be/#me> .
@@ -27,15 +32,17 @@ ex:like-1 a as:Like ;
 <figcaption>Example of a message using the [[!activitystreams-vocabulary]] vocabulary.</figcaption>
 </figure>
 
-Note: You cannot refer to a specific RDF Message, you can only understand the quads belong together. You can however refer to entities defined within the message, such as to `ex:like-1` in the example above.
+Note: You cannot refer to a specific RDF Message, you can only understand the quads belong together. You can however refer to resources defined within the message, such as to `ex:like-1` in the example above.
 
-An <dfn>RDF Message Stream</dfn> carries [=RDF Messages=] from one specific provider to one specific consumer.
+An <dfn>RDF Message Stream</dfn> carries [=RDF Messages=] from one specific producer to one specific consumer.
+
+Issue: Does the RDF Message Stream provide ordering guarantees? I.e., do all RDF Message Logs of the same stream show the messages in the same order?
 
 Note: This is concept is different from an RDF quad stream that carries individual quads.
 
 A <dfn>stream consumer</dfn> listens in on the stream using a stream protocol.
 
-A <dfn>stream provider</dfn> makes available a stream using a stream protocol.
+A <dfn>stream producer</dfn> makes available a stream using a stream protocol.
 
 An <dfn>RDF Message Log</dfn> is an ordered collection of [=RDF Messages=].
 The log can be serialized from an [=RDF Message Stream=], and/or deserialized into an [=RDF Message Stream=].
@@ -53,7 +60,7 @@ ex:Observation1 a sosa:Observation ; sosa:resultTime "2026-01-01T00:00:00Z"^^xsd
 <figcaption>Example of an [=RDF Message Log=] publishing the [=RDF Messages=] that appeared in a stream so far.</figcaption>
 </figure>
 
-Note: A provider may want to indicate that a certain property is used to indicate the timestamp of when the message was created. This can be done, for example, using `ldes:timestampPath` from [Linked Data Event Streams](https://w3id.org/ldes/specification). Alternatively, when vocabularies such as ActivityStreams, SSN/SOSA, or PROV-O are used, one can just assume the respective properties `as:published`, `sosa:resultTime`, or `prov:generatedAtTime` are going to be used for this purpose.
+Note: A producer may want to indicate that a certain property is used to indicate the timestamp of when the message was created. This can be done, for example, using `ldes:timestampPath` from [Linked Data Event Streams](https://w3id.org/ldes/specification). Alternatively, when vocabularies such as ActivityStreams, SSN/SOSA, or PROV-O are used, one can just assume the respective properties `as:published`, `sosa:resultTime`, or `prov:generatedAtTime` are going to be used for this purpose.
 
 # RDF Message Streams # {#rdf-message-streams}
 
@@ -61,17 +68,19 @@ A [=stream consumer=] has functionality to create and access a new [=RDF Message
 
 Note: A stream instance thus only exists when it is being consumed.
 
-A function is called, as specified by the underlying protocol, when the [=stream provider=] sent a new [=RDF Message=] on the [=RDF Message Stream=].
+A function is called on the [=stream consumer=], as specified by the underlying protocol, when the [=stream producer=] sends a new [=RDF Message=] on the [=RDF Message Stream=].
 
-Note: This library may be an abstraction from protocols such as [[!WebSockets]], C-SPARQL, SPARQL-ES, [gRPC](https://grpc.io/), [[!LDN]], [[!EventSource]], [Linked Data Event Streams](https://w3id.org/ldes/specification), [Jelly](https://jelly-rdf.github.io/dev/) or [MQTT](https://mqtt.org/); or may be a programming language specific stream interface that  has an RDF Dataset, or a collection or stream of RDF Quads, filled out as the template.
+Note: This is an abstraction over protocols and APIs such as [[!WebSockets]], C-SPARQL, SPARQL-ES, [gRPC](https://grpc.io/), [[!LDN]], [[!EventSource]], [Linked Data Event Streams](https://w3id.org/ldes/specification), [Jelly](https://w3id.org/jelly/), [MQTT](https://mqtt.org/), or programming language-specific stream interface that carries RDF Datasets, or a collections or streams of RDF Quads.
 
-A [=stream provider=] MAY provide a mechanism to write only when a [=stream consumer=] is ready to process the next message.
+A [=stream producer=] MAY provide a mechanism to write only when a [=stream consumer=] is ready to process the next message.
 
 Issue: Find out and document the similarities/differences to the [RDF-JS Stream interface](https://rdf.js.org/stream-spec/)
 
 # RDF Message Logs # {#rdf-message-logs}
 
-A special type of sink and source of an [=RDF Message Stream=] is an [=RDF Message Log=].
+A special type of [=stream consumer=] and [=stream producer=] of an [=RDF Message Stream=] is an [=RDF Message Log=].
+
+Issue: Should the log be a consumer/producer directly, or should we introduce the notion of a serializer and deserializer?
 
 ## A syntax for RDF Message Logs ## {#rdf-message-log-syntax}
 
@@ -79,10 +88,14 @@ In this specification we propose that all RDF serializations MUST implement a wa
 
 The RDF serializations are either way being revised in the upcoming RDF1.2 specification, in which [version labels](https://www.w3.org/TR/rdf12-concepts/#defined-version-labels) are proposed. We could ask to the working group to include this concept by including yet another `content-type` directive as follows: `Content-Type: application/trig; version=1.2; messages=nld`. This indicates that a newline in this HTTP Response indicates the start of a new RDF Message. Clients that do not rely on [=RDF Messages=] can still interpret the response as regular RDF1.2 data.
 
+Issue: Newlines are unreliable for this purpose, as they will limit how many quads can be in a message. We could instead use comments in TriG and N-Quads. For JSON-LD we can use line delimiting. For RDF/XML we can simply put multiple XML documents in one file. This would have the advantage of being fully backwards compatible for TriG/N-Quads, and require relatively simple changes for JSON-LD and RDF/XML.
+
 ## Example: an archive of an RDF Stream ## {#stream-archive}
 
-The contents of an [=RDF message stream=] may be written to file.
+The contents of an [=RDF Message Stream=] may be written to file.
 However, without the concept of [=RDF Messages=], the semantics of the communicative act of the message is gone and can only be reconstructed using heuristics that come with performance loss.
+
+Issue: I (Piotr) don't understand this paragraph. Can we just write the stream as an RDF Message Log? Then all information is preserved.
 
 ## Example: SPARQL CONSTRUCT would benefit from an RDF Message Log ## {#sparql-construct-messages}
 
