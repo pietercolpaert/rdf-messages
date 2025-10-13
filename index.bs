@@ -16,8 +16,6 @@ An <dfn>RDF Message</dfn> is an [RDF Dataset](https://www.w3.org/TR/rdf12-concep
 
 Note: While no formal restrictions on the size of an RDF Message is defined, they are intended to be kept rather small and actionable.
 
-Issue: What is the scope of blank nodes, and more broadly, do we want to define the semantics of RDF Messages? This was never done for named graphs in RDF1.1.
-
 <figure>
 <div class="example" highlight="turtle">
 ```turtle
@@ -36,8 +34,6 @@ Note: You cannot refer to a specific RDF Message, you can only understand the qu
 
 An <dfn>RDF Message Stream</dfn> carries [=RDF Messages=] from one specific producer to one specific consumer.
 
-Issue: Does the RDF Message Stream provide ordering guarantees? I.e., do all RDF Message Logs of the same stream show the messages in the same order?
-
 Note: This is concept is different from an RDF quad stream that carries individual quads.
 
 A <dfn>stream consumer</dfn> listens in on the stream using a stream protocol.
@@ -50,11 +46,20 @@ The log can be serialized from an [=RDF Message Stream=], and/or deserialized in
 <figure>
 <div class="example" highlight="turtle">
 ```turtle
----a message 1 defining the context---
-ex:Stream1 a ex:Dataset; rdfs:comment "A log of messages that appeared on a stream" .
----the next message is an observation in the stream---
-ex:Observation1 a sosa:Observation ; sosa:resultTime "2026-01-01T00:00:00Z"^^xsd:dateTime ; sosa:hasSimpleResult "..." .
----
+# --- a message defining the context
+ex:Stream1 a ex:Dataset;
+    rdfs:comment "A log of messages that appeared on a stream" .
+# --- a next message is an observation in the stream
+ex:Observation1
+    a sosa:Observation ;
+	sosa:resultTime "2026-01-01T00:00:00Z"^^xsd:dateTime ;
+	sosa:hasSimpleResult "..." .
+# --- another observation
+ex:Observation2
+    a sosa:Observation ;
+	sosa:resultTime "2026-01-01T00:10:00Z"^^xsd:dateTime ;
+	sosa:hasSimpleResult "..." .
+	
 ```
 </div>
 <figcaption>Example of an [=RDF Message Log=] publishing the [=RDF Messages=] that appeared in a stream so far.</figcaption>
@@ -62,15 +67,15 @@ ex:Observation1 a sosa:Observation ; sosa:resultTime "2026-01-01T00:00:00Z"^^xsd
 
 Note: A producer may want to indicate that a certain property is used to indicate the timestamp of when the message was created. This can be done, for example, using `ldes:timestampPath` from [Linked Data Event Streams](https://w3id.org/ldes/specification). Alternatively, when vocabularies such as ActivityStreams, SSN/SOSA, or PROV-O are used, one can just assume the respective properties `as:published`, `sosa:resultTime`, or `prov:generatedAtTime` are going to be used for this purpose.
 
+Note: The scope of blank nodes is defined by the underlying protocol. E.g. for documents with multiple RDF messages in them, this remains the document itself.
+
 # RDF Message Streams # {#rdf-message-streams}
 
-A [=stream consumer=] has functionality to create and access a new [=RDF Message Stream=].
-
-Note: A stream instance thus only exists when it is being consumed.
+A [=stream consumer=] has functionality to create and access a new [=RDF Message Stream=]. A stream instance thus only exists when it is being consumed.
 
 A function is called on the [=stream consumer=], as specified by the underlying protocol, when the [=stream producer=] sends a new [=RDF Message=] on the [=RDF Message Stream=].
 
-Note: This is an abstraction over protocols and APIs such as [[!WebSockets]], C-SPARQL, SPARQL-ES, [gRPC](https://grpc.io/), [[!LDN]], [[!EventSource]], [Linked Data Event Streams](https://w3id.org/ldes/specification), [Jelly](https://w3id.org/jelly/), [MQTT](https://mqtt.org/), or programming language-specific stream interface that carries RDF Datasets, or a collections or streams of RDF Quads.
+Note: This is an abstraction over protocols and APIs such as [[!WebSockets]], C-SPARQL, SPARQL-ES, [gRPC](https://grpc.io/), [[!LDN]], [[!EventSource]], [Linked Data Event Streams](https://w3id.org/ldes/specification), [Jelly](https://w3id.org/jelly/), [MQTT](https://mqtt.org/), or programming language-specific stream interface that carries RDF Datasets, or a collection or stream of RDF Quads.
 
 A [=stream producer=] MAY provide a mechanism to write only when a [=stream consumer=] is ready to process the next message.
 
@@ -78,26 +83,24 @@ Issue: Find out and document the similarities/differences to the [RDF-JS Stream 
 
 # RDF Message Logs # {#rdf-message-logs}
 
-A special type of [=stream consumer=] and [=stream producer=] of an [=RDF Message Stream=] is an [=RDF Message Log=].
+In this specification we propose that all RDF serializations MUST implement a way to group quads into [=RDF Messages=].
+This way, a [=stream consumer=] can write the stream into an [=RDF Message Log=] that can be read again by a [=stream producer=] into an [=RDF Message Stream=].
 
-Issue: Should the log be a consumer/producer directly, or should we introduce the notion of a serializer and deserializer?
+The RDF serializations are either way being revised in the upcoming RDF1.2 specification, in which [version labels](https://www.w3.org/TR/rdf12-concepts/#defined-version-labels) are proposed. We could ask to the working group to include this concept by including yet another `content-type` directive as follows: `Content-Type: application/trig; version=1.2; messages=tdc`. This indicates that a triple dash comment (tdc) in this HTTP Response indicates the start of a new RDF Message. Clients that do not rely on [=RDF Messages=] can still interpret the response as regular RDF1.2 data.
 
-## A syntax for RDF Message Logs ## {#rdf-message-log-syntax}
-
-In this specification we propose that all RDF serializations MUST implement a way to group quads into RDF Messages.
-
-The RDF serializations are either way being revised in the upcoming RDF1.2 specification, in which [version labels](https://www.w3.org/TR/rdf12-concepts/#defined-version-labels) are proposed. We could ask to the working group to include this concept by including yet another `content-type` directive as follows: `Content-Type: application/trig; version=1.2; messages=nld`. This indicates that a newline in this HTTP Response indicates the start of a new RDF Message. Clients that do not rely on [=RDF Messages=] can still interpret the response as regular RDF1.2 data.
-
-Issue: Newlines are unreliable for this purpose, as they will limit how many quads can be in a message. We could instead use comments in TriG and N-Quads. For JSON-LD we can use line delimiting. For RDF/XML we can simply put multiple XML documents in one file. This would have the advantage of being fully backwards compatible for TriG/N-Quads, and require relatively simple changes for JSON-LD and RDF/XML.
+TODO: For JSON-LD and RDF/XML?
 
 ## Example: an archive of an RDF Stream ## {#stream-archive}
 
-The contents of an [=RDF Message Stream=] may be written to file.
-However, without the concept of [=RDF Messages=], the semantics of the communicative act of the message is gone and can only be reconstructed using heuristics that come with performance loss.
+When you write out an [=RDF Message Log=] into a file, all [=RDF Messages=] are preserved when deserializing it again.
+This can be streamed out in the same order as it was written into the file as well.
 
-Issue: I (Piotr) don't understand this paragraph. Can we just write the stream as an RDF Message Log? Then all information is preserved.
+Without the semantics of an [=RDF Message=], and without the syntax for it, trying to reconstruct the intended message becomes slow and cannot be solved without using sub-optimal heuristics.
+The performance loss is due to the fact that there could always be another quad at the end of the file that still needs to be considered for the message, as you cannot rely on the quads being grouped together.
+A heuristic is needed as you can only guess that e.g. subject-based star patterns, or maybe a [[!CBD]], or maybe a named graph is going to be used.
+This is what is being used by [the Linked Data Event Streams “member extraction” step](https://semiceu.github.io/LinkedDataEventStreams/#members).
 
-## Example: SPARQL CONSTRUCT would benefit from an RDF Message Log ## {#sparql-construct-messages}
+## Example: SPARQL CONSTRUCT results ## {#sparql-construct-messages}
 
 <figure>
 <div class="example" highlight="sparql">
@@ -121,13 +124,14 @@ CONSTRUCT {
               dbp:populationCensus | dbo:populationTotal ?pop .
     
     FILTER (LANG(?lname) = "en")
-  }
-} LIMIT 1000
+} ORDER BY ?location LIMIT 10000
 ```
 </div>
-<figcaption>If the query engine would support RDF message logs to indicate that groups of triples are part of a certain result, it would speed up clients.</figcaption>
+<figcaption>If the query engine would support RDF message logs to indicate that groups of triples are part of a certain result, it would speed up clients that want to use the message as a meaningful concept. <a href="https://dbpedia.org/sparql?default-graph-uri=http%3A%2F%2Fdbpedia.org&query=PREFIX+rdf%3A+%3Chttp%3A%2F%2Fwww.w3.org%2F1999%2F02%2F22-rdf-syntax-ns%23%3E%0D%0APREFIX+rdfs%3A+%3Chttp%3A%2F%2Fwww.w3.org%2F2000%2F01%2Frdf-schema%23%3E%0D%0APREFIX+dbo%3A+%3Chttp%3A%2F%2Fdbpedia.org%2Fontology%2F%3E%0D%0APREFIX+dbp%3A+%3Chttp%3A%2F%2Fdbpedia.org%2Fproperty%2F%3E%0D%0ACONSTRUCT+%7B%0D%0A++%3Fcompany+a+dbo%3ACompany+%3B%0D%0A+++++++dbo%3Alocation+%3Flocation+.%0D%0A++%0D%0A++%3Flocation+rdf%3Atype+dbo%3ACountry+%3B%0D%0A++++++++++++rdfs%3Alabel+%3Flname+%3B%0D%0A++++++++++++dbp%3ApopulationCensus+%3Fpop+.%0D%0A%7D+WHERE+%7B%0D%0A++++%3Fcompany+dbo%3Alocation+%7C+dbo%3AlocationCountry+%3Flocation+.%0D%0A++++%0D%0A++++%3Flocation+rdf%3Atype+dbo%3ACountry+%3B%0D%0A++++++++++++++rdfs%3Alabel+%3Flname+%3B%0D%0A++++++++++++++dbp%3ApopulationCensus+%7C+dbo%3ApopulationTotal+%3Fpop+.%0D%0A++++FILTER+%28LANG%28%3Flname%29+%3D+%22en%22%29%0D%0A%7D+ORDER+BY+%3Flocation+LIMIT+1000+&format=text%2Fturtle&timeout=30000&signal_void=on&signal_unconnected=on">Test query in dbpedia</a>&mdash;<a href="https://query.linkeddatafragments.org/#transientDatasources=%2F%2Ffragments.dbpedia.org%2F2016-04%2Fen&query=PREFIX%20rdf%3A%20%3Chttp%3A%2F%2Fwww.w3.org%2F1999%2F02%2F22-rdf-syntax-ns%23%3E%0APREFIX%20rdfs%3A%20%3Chttp%3A%2F%2Fwww.w3.org%2F2000%2F01%2Frdf-schema%23%3E%0APREFIX%20dbo%3A%20%3Chttp%3A%2F%2Fdbpedia.org%2Fontology%2F%3E%0APREFIX%20dbp%3A%20%3Chttp%3A%2F%2Fdbpedia.org%2Fproperty%2F%3E%0ACONSTRUCT%20%7B%0A%20%20%3Fcompany%20a%20dbo%3ACompany%20%3B%0A%20%20%20%20%20%20%20dbo%3Alocation%20%3Flocation%20.%0A%20%20%0A%20%20%3Flocation%20rdf%3Atype%20dbo%3ACountry%20%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20rdfs%3Alabel%20%3Flname%20%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20dbp%3ApopulationCensus%20%3Fpop%20.%0A%7D%20WHERE%20%7B%0A%20%20%20%20%3Fcompany%20dbo%3Alocation%20%7C%20dbo%3AlocationCountry%20%3Flocation%20.%0A%20%20%20%20%0A%20%20%20%20%3Flocation%20rdf%3Atype%20dbo%3ACountry%20%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20rdfs%3Alabel%20%3Flname%20%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20dbp%3ApopulationCensus%20%7C%20dbo%3ApopulationTotal%20%3Fpop%20.%0A%20%20%20%20FILTER%20%28LANG%28%3Flname%29%20%3D%20%22en%22%29%0A%7D%20LIMIT%201000%20">Test using Comunica</a></figcaption>
 </figure>
 
-The example generates 1000 companies in countries and lists the population number of the country.
+The example generates 10000 companies in countries and lists the population number of the country.
 Now imagine that a consumer wants to process the results of this SPARQL query, where each construct result is an [=RDF Message=].
 While the server could have grouped the quads for the consumer, the consumer will have to re-construct the BGP in the CONSTRUCT clause again on the client before it can proceed.
+The obvious solution here is to use an [=RDF Message Stream=].
+
