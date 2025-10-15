@@ -40,6 +40,8 @@ A <dfn>stream consumer</dfn> listens in on the stream using a stream protocol.
 
 A <dfn>stream producer</dfn> makes available a stream using a stream protocol.
 
+Note: The underlying stream protocol is out of scope of this specification. It can be for example [[!WebSockets]], [[!LDN]], [[!EventSource]], [Linked Data Event Streams](https://w3id.org/ldes/specification), [Jelly gRPC](https://w3id.org/jelly/), [MQTT](https://mqtt.org/), or a programming language-specific stream interface that carries RDF Datasets, or a collection or stream of RDF Quads.
+
 An <dfn>RDF Message Log</dfn> is an ordered collection of [=RDF Messages=].
 The log can be serialized from an [=RDF Message Stream=], and/or deserialized into an [=RDF Message Stream=].
 
@@ -68,13 +70,15 @@ Note: A producer may want to indicate that a certain property is used to indicat
 
 Note: The scope of blank nodes is defined by the underlying protocol. E.g. for documents with multiple RDF messages in them, this remains the document itself.
 
+Issue: If blank nodes in an N-Quads Message Log are scoped to the entire document, then to serialize a long stream and avoid blank node collisions, the producer would need to store in memory all blank nodes ever used or rely on UUIDs. Is this feasible? See also: [Issue #3](https://github.com/pietercolpaert/rdf-messages/issues/3)
+
 # RDF Message Streams # {#rdf-message-streams}
 
 A [=stream consumer=] has functionality to create and access a new [=RDF Message Stream=]. A stream instance thus only exists when it is being consumed.
 
 A function is called on the [=stream consumer=], as specified by the underlying protocol, when the [=stream producer=] sends a new [=RDF Message=] on the [=RDF Message Stream=].
 
-Note: This is an abstraction over protocols and APIs such as [[!WebSockets]], C-SPARQL, SPARQL-ES, [gRPC](https://grpc.io/), [[!LDN]], [[!EventSource]], [Linked Data Event Streams](https://w3id.org/ldes/specification), [Jelly](https://w3id.org/jelly/), [MQTT](https://mqtt.org/), or programming language-specific stream interface that carries RDF Datasets, or a collection or stream of RDF Quads.
+Note: This is an abstraction over the underlying protocol or API.
 
 A [=stream producer=] MAY provide a mechanism to write only when a [=stream consumer=] is ready to process the next message.
 
@@ -89,10 +93,12 @@ The RDF serializations are either way being revised in the upcoming RDF1.2 speci
 
 TODO: For JSON-LD and RDF/XML?
 
+Issue: See also: [Issue #2](https://github.com/pietercolpaert/rdf-messages/issues/2)
+
 ## Example: an archive of an RDF Stream ## {#stream-archive}
 
 When you write out an [=RDF Message Log=] into a file, all [=RDF Messages=] are preserved when deserializing it again.
-This can be streamed out in the same order as it was written into the file as well.
+They are streamed out in the same order as they were written into the file.
 
 Without the semantics of an [=RDF Message=], and without the syntax for it, trying to reconstruct the intended message becomes slow and cannot be solved without using sub-optimal heuristics.
 The performance loss is due to the fact that there could always be another quad at the end of the file that still needs to be considered for the message, as you cannot rely on the quads being grouped together.
@@ -134,3 +140,32 @@ Now imagine that a consumer wants to process the results of this SPARQL query, w
 While the server could have grouped the quads for the consumer, the consumer will have to re-construct the BGP in the CONSTRUCT clause again on the client before it can proceed.
 The obvious solution here is to use an [=RDF Message Stream=].
 
+## Example: RiverBench dataset distributions ## {#riverbench-dataset-distributions}
+
+Datasets in [RiverBench](https://w3id.org/riverbench/) are streams of RDF datasets that can be processed individually as RDF Messages. They represent real-world use cases of streaming RDF data.
+For example, the [officegraph dataset](https://w3id.org/riverbench/datasets/officegraph/dev) consists of almost 15 million RDF graphs with IoT measurements (see example below).
+
+<figure>
+<div class="example" highlight="turtle">
+```turtle
+PREFIX ic:    <https://interconnectproject.eu/example/>
+PREFIX om:    <http://www.wurvoc.org/vocabularies/om-1.8/>
+PREFIX saref: <https://saref.etsi.org/core/>
+PREFIX xsd:   <http://www.w3.org/2001/XMLSchema#>
+
+ic:property_R5_56__co2_
+        a       ic:CO2Level .
+
+ic:measurement_R5_56__co2__0
+        a                        saref:Measurement;
+        saref:hasTimestamp       "2022-02-28T23:59:00"^^xsd:dateTime;
+        saref:hasValue           "504"^^xsd:float;
+        saref:isMeasuredIn       om:partsPerMillion;
+        saref:relatesToProperty  ic:property_R5_56__co2_ .
+```
+</div>
+<figcaption>Example of an RDF Message in the officegraph dataset.</figcaption>
+</figure>
+
+To distribute this stream, a TAR archive is used, where each file in the archive is an RDF Message in the stream.
+This could be greatly improved by using an [=RDF Message Log=] serialization instead, as this would allow to save the entire stream into a single file, while still being able to reconstruct the individual messages again.
