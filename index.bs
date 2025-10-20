@@ -33,7 +33,7 @@ ex:like-1 a as:Like ;
 
 Note: You cannot refer to a specific RDF Message, you can only understand the quads belong together. You can however refer to resources defined within the message, such as to `ex:like-1` in the example above.
 
-An <dfn>RDF Message Stream</dfn> carries [=RDF Messages=] from one specific producer to one specific consumer.
+An <dfn>RDF Message Stream</dfn> instance carries [=RDF Messages=] from one specific producer to one specific consumer.
 
 Note: This is concept is different from an RDF quad stream that carries individual quads.
 
@@ -75,7 +75,7 @@ Issue: If blank nodes in an N-Quads Message Log are scoped to the entire documen
 
 # RDF Message Streams # {#rdf-message-streams}
 
-A [=stream consumer=] has functionality to create and access a new [=RDF Message Stream=]. A stream instance thus only exists when it is being consumed.
+A [=stream consumer=] has functionality to create and access a new [=RDF Message Stream=] instance. An instance thus only exists when it is being consumed.
 
 A function is called on the [=stream consumer=], as specified by the underlying protocol, when the [=stream producer=] sends a new [=RDF Message=] on the [=RDF Message Stream=].
 
