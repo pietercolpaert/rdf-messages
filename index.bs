@@ -33,7 +33,7 @@ ex:like-1 a as:Like ;
 
 Note: You cannot refer to a specific RDF Message, you can only understand the quads belong together. You can however refer to resources defined within the message, such as to `ex:like-1` in the example above.
 
-An <dfn>RDF Message Stream</dfn> carries [=RDF Messages=] from one specific producer to one specific consumer.
+An <dfn>RDF Message Stream</dfn> instance carries [=RDF Messages=] from one specific producer to one specific consumer.
 
 Note: This is concept is different from an RDF quad stream that carries individual quads.
 
@@ -49,15 +49,15 @@ The log can be serialized from an [=RDF Message Stream=], and/or deserialized in
 <figure>
 <div class="example" highlight="turtle">
 ```turtle
-# --- a message defining the context
+# a message defining the context
 ex:Stream1 a ex:Dataset;
     rdfs:comment "A log of messages that appeared on a stream" .
-# --- a next message is an observation in the stream
+# @message a next message is an observation in the stream
 ex:Observation1
     a sosa:Observation ;
     sosa:resultTime "2026-01-01T00:00:00Z"^^xsd:dateTime ;
     sosa:hasSimpleResult "..." .
-# --- another observation
+# @message another observation
 ex:Observation2
     a sosa:Observation ;
     sosa:resultTime "2026-01-01T00:10:00Z"^^xsd:dateTime ;
@@ -75,7 +75,7 @@ Issue: If blank nodes in an N-Quads Message Log are scoped to the entire documen
 
 # RDF Message Streams # {#rdf-message-streams}
 
-A [=stream consumer=] has functionality to create and access a new [=RDF Message Stream=]. A stream instance thus only exists when it is being consumed.
+A [=stream consumer=] has functionality to create and access a new [=RDF Message Stream=] instance. An instance thus only exists when it is being consumed.
 
 A function is called on the [=stream consumer=], as specified by the underlying protocol, when the [=stream producer=] sends a new [=RDF Message=] on the [=RDF Message Stream=].
 
@@ -85,16 +85,33 @@ A [=stream producer=] MAY provide a mechanism to write only when a [=stream cons
 
 Issue: Find out and document the similarities/differences to the [RDF-JS Stream interface](https://rdf.js.org/stream-spec/)
 
-# RDF Message Logs # {#rdf-message-logs}
+# Serializing RDF Message Logs # {#rdf-message-logs}
 
 In this specification we propose that all RDF serializations MUST implement a way to group quads into [=RDF Messages=].
 This way, a [=stream consumer=] can write the stream into an [=RDF Message Log=] that can be read again by a [=stream producer=] into an [=RDF Message Stream=].
 
-The RDF serializations are either way being revised in the upcoming RDF1.2 specification, in which [version labels](https://www.w3.org/TR/rdf12-concepts/#defined-version-labels) are proposed. We could ask to the working group to include this concept by including yet another `content-type` directive as follows: `Content-Type: application/trig; version=1.2; messages=tdc`. This indicates that a triple dash comment (tdc) in this HTTP Response indicates the start of a new RDF Message. Clients that do not rely on [=RDF Messages=] can still interpret the response as regular RDF1.2 data.
+## From N-Triples and Turtle to TRiG ## {#turtle}
 
-TODO: For JSON-LD and RDF/XML?
+The RDF serializations are either way being revised in the upcoming RDF1.2 specification, in which [version labels](https://www.w3.org/TR/rdf12-concepts/#defined-version-labels) are proposed.
+This is a proposal to the working group to include this concept by including yet another `content-type` directive as follows: `Content-Type: application/trig; version=1.2; messages=rdfm`.
+This indicates that the messages are following this spec in this HTTP Response. Clients that do not rely on [=RDF Messages=] can still interpret the response as regular RDF1.2 data.
 
-Issue: See also: [Issue #2](https://github.com/pietercolpaert/rdf-messages/issues/2)
+When the `content-type` flagged the support for messages, and a parser is in message mode, it MUST:
+ 1. Consider every triple in the document as part of an [=RDF Message=]. The document thus does not need to start with a delimited.
+ 2. Triples are added to the current message as long as no delimiter or EOF has been encountered.
+ 3. When a delimiter was encountered, the current [=RDF Message=] is finalized and a next one is opened.
+
+The delimiter is a comment in the document that matches this regex: `/^\s*@message/`.
+
+## JSON-LD ## {#json-ld}
+
+Issue: This discussion is preliminary, yet on-going, in the JSON-LD group itself with a proposal called [newline delimited JSON-LD](https://github.com/json-ld/ndjson-ld/issues/1). We propose that that specification becomes the preferred way of adding messages support in JSON-LD.
+
+## RDF/XML ## {#rdf-xml}
+
+Each message is a new XML document on a new line.
+
+This is made discoverable with a new content-type: `Content-Type: application/rdfm+xml`
 
 ## Example: an archive of an RDF Stream ## {#stream-archive}
 
