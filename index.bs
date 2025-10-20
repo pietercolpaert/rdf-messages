@@ -6,6 +6,7 @@ Status: LD
 Markup Shorthands: markdown yes
 URL: https://www.pieter.pm/rdf-messages
 Editor: Pieter Colpaert, https://pietercolpaert.be
+Editor: Piotr Sowiński, https://ostrzyciel.eu/
 Repository: https://github.com/pietercolpaert/rdf-messages
 Abstract: Concepts and abstract data model for RDF Messages
 </pre>
