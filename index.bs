@@ -14,6 +14,7 @@ Abstract: Concepts and abstract data model for RDF Messages
 # Introduction # {#introduction}
 
 An <dfn>RDF Message</dfn> is an [RDF Dataset](https://www.w3.org/TR/rdf12-concepts/#dfn-rdf-dataset) that is intended to be interpreted atomically as a single communicative act.
+The dataset of the message can be empty.
 
 Note: While no formal restrictions on the size of an RDF Message is defined, they are intended to be kept rather small and actionable.
 
@@ -57,6 +58,7 @@ ex:Observation1
     a sosa:Observation ;
     sosa:resultTime "2026-01-01T00:00:00Z"^^xsd:dateTime ;
     sosa:hasSimpleResult "..." .
+# @message an empty message
 # @message another observation
 ex:Observation2
     a sosa:Observation ;
@@ -85,19 +87,19 @@ A [=stream producer=] MAY provide a mechanism to write only when a [=stream cons
 
 Issue: Find out and document the similarities/differences to the [RDF-JS Stream interface](https://rdf.js.org/stream-spec/)
 
-# Serializing RDF Message Logs # {#rdf-message-logs}
+# Serializing and parsing RDF Message Logs # {#rdf-message-logs}
 
 In this specification we propose that all RDF serializations MUST implement a way to group quads into [=RDF Messages=].
 This way, a [=stream consumer=] can write the stream into an [=RDF Message Log=] that can be read again by a [=stream producer=] into an [=RDF Message Stream=].
 
-## From N-Triples and Turtle to TRiG ## {#turtle}
+## N-Triples, N-Quads, Turtle and TRiG ## {#turtle}
 
 The RDF serializations are either way being revised in the upcoming RDF1.2 specification, in which [version labels](https://www.w3.org/TR/rdf12-concepts/#defined-version-labels) are proposed.
 This is a proposal to the working group to include this concept by including yet another `content-type` directive as follows: `Content-Type: application/trig; version=1.2; messages=rdfm`.
 This indicates that the messages are following this spec in this HTTP Response. Clients that do not rely on [=RDF Messages=] can still interpret the response as regular RDF1.2 data.
 
 When the `content-type` flagged the support for messages, and a parser is in message mode, it MUST:
- 1. Consider every triple in the document as part of an [=RDF Message=]. The document thus does not need to start with a delimited.
+ 1. Consider every triple in the document as part of an [=RDF Message=]. The document does not need to start with a delimiter. If it does start with a delimiter, the content after the delimiter is part of the first message and the document did not start with an empty message.
  2. Triples are added to the current message as long as no delimiter or EOF has been encountered.
  3. When a delimiter was encountered, the current [=RDF Message=] is finalized and a next one is opened.
 
@@ -106,6 +108,8 @@ The delimiter is a comment in the document that matches this regex: `/^\s*@messa
 ## JSON-LD ## {#json-ld}
 
 Issue: This discussion is preliminary, yet on-going, in the JSON-LD group itself with a proposal called [newline delimited JSON-LD](https://github.com/json-ld/ndjson-ld/issues/1). We propose that that specification becomes the preferred way of adding messages support in JSON-LD.
+
+Issue: Instead of using a newline delimited format, also other types of RDF Message delimiting can be imagined, for example, by using an array of elements linked from an `@message` directive, indicating to the parser that the JSON-LD object that follows is to be interpreted as an RDF Message.
 
 ## RDF/XML ## {#rdf-xml}
 
