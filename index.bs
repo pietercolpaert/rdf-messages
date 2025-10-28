@@ -113,7 +113,9 @@ Each message is a new XML document on a new line.
 
 This is made discoverable with a new content-type: `Content-Type: application/rdfm+xml`
 
-## Example: an archive of an RDF Stream ## {#stream-archive}
+# Examples and use cases # {#examples}
+
+## An archive of an RDF Stream ## {#stream-archive}
 
 When you write out an [=RDF Message Log=] into a file, all [=RDF Messages=] are preserved when deserializing it again.
 They are streamed out in the same order as they were written into the file.
@@ -123,7 +125,7 @@ The performance loss is due to the fact that there could always be another quad 
 A heuristic is needed as you can only guess that e.g. subject-based star patterns, or maybe a [[!CBD]], or maybe a named graph is going to be used.
 This is what is being used by [the Linked Data Event Streams “member extraction” step](https://semiceu.github.io/LinkedDataEventStreams/#members).
 
-## Example: SPARQL CONSTRUCT results ## {#sparql-construct-messages}
+## SPARQL CONSTRUCT results ## {#sparql-construct-messages}
 
 <figure>
 <div class="example" highlight="sparql">
@@ -158,7 +160,7 @@ Now imagine that a consumer wants to process the results of this SPARQL query, w
 While the server could have grouped the quads for the consumer, the consumer will have to re-construct the BGP in the CONSTRUCT clause again on the client before it can proceed.
 The obvious solution here is to use an [=RDF Message Stream=].
 
-## Example: RiverBench dataset distributions ## {#riverbench-dataset-distributions}
+## RiverBench dataset distributions ## {#riverbench-dataset-distributions}
 
 Datasets in [RiverBench](https://w3id.org/riverbench/) are streams of RDF datasets that can be processed individually as RDF Messages. They represent real-world use cases of streaming RDF data.
 For example, the [officegraph dataset](https://w3id.org/riverbench/datasets/officegraph/dev) consists of almost 15 million RDF graphs with IoT measurements (see example below).
