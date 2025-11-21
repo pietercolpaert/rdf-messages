@@ -92,11 +92,13 @@ Issue: Find out and document the similarities/differences to the [RDF-JS Stream 
 In this specification we propose that all RDF serializations MUST implement a way to group quads into [=RDF Messages=].
 This way, a [=stream consumer=] can write the stream into an [=RDF Message Log=] that can be read again by a [=stream producer=] into an [=RDF Message Stream=].
 
-## N-Triples, N-Quads, Turtle and TRiG ## {#turtle}
+Note: While we do define content types for the RDF Message Log serialization formats, this does not imply that the serialization needs to be used over HTTP only. The use of alternative transport mechanisms is equally valid and encouraged.
 
-The RDF serializations are either way being revised in the upcoming RDF1.2 specification, in which [version labels](https://www.w3.org/TR/rdf12-concepts/#defined-version-labels) are proposed.
+## N-Triples, N-Quads, Turtle and TriG ## {#turtle}
+
+The RDF serializations are either way being revised in the upcoming RDF 1.2 specification, in which [version labels](https://www.w3.org/TR/rdf12-concepts/#defined-version-labels) are proposed.
 This is a proposal to the working group to include this concept by including yet another `content-type` directive as follows: `Content-Type: application/trig; version=1.2; messages=rdfm`.
-This indicates that the messages are following this spec in this HTTP Response. Clients that do not rely on [=RDF Messages=] can still interpret the response as regular RDF1.2 data.
+This indicates that the messages are following this spec in this HTTP Response. Clients that do not rely on [=RDF Messages=] can still interpret the response as regular RDF 1.2 data.
 
 When the `content-type` flagged the support for messages, and a parser is in message mode, it MUST:
  1. Consider every triple in the document as part of an [=RDF Message=]. The document does not need to start with a delimiter. If it does start with a delimiter, the content after the delimiter is part of the first message and the document did not start with an empty message.
@@ -105,9 +107,11 @@ When the `content-type` flagged the support for messages, and a parser is in mes
 
 The delimiter is a comment in the document that matches this regex: `/^\s*@message/`.
 
+Issue: Should we allow repeated `BASE` and `PREFIX` directives in Turtle / TriG RDF Message Logs? Should they override the previously encountered directives? This may require additional work in the parser.
+
 ## JSON-LD ## {#json-ld}
 
-Issue: This discussion is preliminary, yet on-going, in the JSON-LD group itself with a proposal called [newline delimited JSON-LD](https://github.com/json-ld/ndjson-ld/issues/1). We propose that that specification becomes the preferred way of adding messages support in JSON-LD.
+Issue: This discussion is preliminary, yet on-going, in the JSON-LD group itself with a proposal called [newline delimited JSON-LD](https://github.com/json-ld/ndjson-ld/issues/1). We propose that that specification becomes the preferred way of adding messages support in JSON-LD. It is [already implemented in some libraries](https://github.com/eclipse-rdf4j/rdf4j/issues/2840) and it is already being used in some projects.
 
 Issue: Instead of using a newline delimited format, also other types of RDF Message delimiting can be imagined, for example, by using an array of elements linked from an `@message` directive, indicating to the parser that the JSON-LD object that follows is to be interpreted as an RDF Message.
 
@@ -116,6 +120,10 @@ Issue: Instead of using a newline delimited format, also other types of RDF Mess
 Each message is a new XML document on a new line.
 
 This is made discoverable with a new content-type: `Content-Type: application/rdfm+xml`
+
+## Other formats ## {#other-formats}
+
+Efficient interchange of [=RDF Message Log=] may also be done using binary RDF serializations, such as [Jelly](https://w3id.org/jelly/), which already has built-in support for grouping quads into messages. We propose that Jelly and similar formats use the definitions from this specification to define the semantics of RDF Messages.
 
 # Examples and use cases # {#examples}
 
@@ -156,7 +164,7 @@ CONSTRUCT {
 } ORDER BY ?location LIMIT 10000
 ```
 </div>
-<figcaption>If the query engine would support RDF message logs to indicate that groups of triples are part of a certain result, it would speed up clients that want to use the message as a meaningful concept.</figcaption>
+<figcaption>If the query engine would support RDF Message Logs to indicate that groups of triples are part of a certain result, it would speed up clients that want to use the message as a meaningful concept.</figcaption>
 </figure>
 
 The example (Test it using the [DBpedia SPARQL endpoint](https://dbpedia.org/sparql?default-graph-uri=http%3A%2F%2Fdbpedia.org&query=PREFIX+rdf%3A+%3Chttp%3A%2F%2Fwww.w3.org%2F1999%2F02%2F22-rdf-syntax-ns%23%3E%0D%0APREFIX+rdfs%3A+%3Chttp%3A%2F%2Fwww.w3.org%2F2000%2F01%2Frdf-schema%23%3E%0D%0APREFIX+dbo%3A+%3Chttp%3A%2F%2Fdbpedia.org%2Fontology%2F%3E%0D%0APREFIX+dbp%3A+%3Chttp%3A%2F%2Fdbpedia.org%2Fproperty%2F%3E%0D%0ACONSTRUCT+%7B%0D%0A++%3Fcompany+a+dbo%3ACompany+%3B%0D%0A+++++++dbo%3Alocation+%3Flocation+.%0D%0A++%0D%0A++%3Flocation+rdf%3Atype+dbo%3ACountry+%3B%0D%0A++++++++++++rdfs%3Alabel+%3Flname+%3B%0D%0A++++++++++++dbp%3ApopulationCensus+%3Fpop+.%0D%0A%7D+WHERE+%7B%0D%0A++++%3Fcompany+dbo%3Alocation+%7C+dbo%3AlocationCountry+%3Flocation+.%0D%0A++++%0D%0A++++%3Flocation+rdf%3Atype+dbo%3ACountry+%3B%0D%0A++++++++++++++rdfs%3Alabel+%3Flname+%3B%0D%0A++++++++++++++dbp%3ApopulationCensus+%7C+dbo%3ApopulationTotal+%3Fpop+.%0D%0A++++FILTER+%28LANG%28%3Flname%29+%3D+%22en%22%29%0D%0A%7D+ORDER+BY+%3Flocation+LIMIT+1000+&format=text%2Fturtle&timeout=30000&signal_void=on&signal_unconnected=on) or [using Comunica](https://query.linkeddatafragments.org/#transientDatasources=%2F%2Ffragments.dbpedia.org%2F2016-04%2Fen&query=PREFIX%20rdf%3A%20%3Chttp%3A%2F%2Fwww.w3.org%2F1999%2F02%2F22-rdf-syntax-ns%23%3E%0APREFIX%20rdfs%3A%20%3Chttp%3A%2F%2Fwww.w3.org%2F2000%2F01%2Frdf-schema%23%3E%0APREFIX%20dbo%3A%20%3Chttp%3A%2F%2Fdbpedia.org%2Fontology%2F%3E%0APREFIX%20dbp%3A%20%3Chttp%3A%2F%2Fdbpedia.org%2Fproperty%2F%3E%0ACONSTRUCT%20%7B%0A%20%20%3Fcompany%20a%20dbo%3ACompany%20%3B%0A%20%20%20%20%20%20%20dbo%3Alocation%20%3Flocation%20.%0A%20%20%0A%20%20%3Flocation%20rdf%3Atype%20dbo%3ACountry%20%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20rdfs%3Alabel%20%3Flname%20%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20dbp%3ApopulationCensus%20%3Fpop%20.%0A%7D%20WHERE%20%7B%0A%20%20%20%20%3Fcompany%20dbo%3Alocation%20%7C%20dbo%3AlocationCountry%20%3Flocation%20.%0A%20%20%20%20%0A%20%20%20%20%3Flocation%20rdf%3Atype%20dbo%3ACountry%20%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20rdfs%3Alabel%20%3Flname%20%3B%0A%20%20%20%20%20%20%20%20%20%20%20%20%20%20dbp%3ApopulationCensus%20%7C%20dbo%3ApopulationTotal%20%3Fpop%20.%0A%20%20%20%20FILTER%20%28LANG%28%3Flname%29%20%3D%20%22en%22%29%0A%7D%20LIMIT%201000%20)) generates 10000 companies in countries and lists the population number of the country.
@@ -195,3 +203,9 @@ To distribute this stream, a TAR archive is used, where each file in the archive
 This could be greatly improved by using an [=RDF Message Log=] serialization instead, as this would allow to save the entire stream into a single file, while still being able to reconstruct the individual messages again.
 
 As an alternative, [Jelly-RDF](https://w3id.org/jelly) distributions are also available, where the entire stream is serialized as a single `.jelly` file. In the file, one [Jelly frame](https://w3id.org/jelly/dev/user-guide/#stream-frames) corresponds to one RDF dataset. Under this specification, this would be a valid [=RDF Message Log=] serialization.
+
+## Nanopublications ## {#nanopublications}
+
+A [Nanopublication](https://nanopub.net/) is a small RDF dataset that contains an assertion, its provenance, and publication information. Nanopublications are stored and exchanged by a network of services (registries and query endpoints). Exchanging each Nanopublication individually leads to significant overhead, due to repeated HTTP requests necessitated by the lack of a format for grouping multiple Nanopublications together. This issue was resolved by using [Jelly](https://w3id.org/jelly/) to serialize multiple Nanopublications into a single byte stream, where each Nanopublication corresponds to a [Jelly frame](https://w3id.org/jelly/dev/user-guide/#stream-frames).
+
+Using an [=RDF Message Log=] serialization to group multiple Nanopublications into a single file would also solve this problem, while still allowing each Nanopublication to be processed individually as an [=RDF Message=].
