@@ -92,13 +92,13 @@ Issue: Find out and document the similarities/differences to the [RDF-JS Stream 
 In this specification we propose that all RDF serializations MUST implement a way to group quads into [=RDF Messages=].
 This way, a [=stream consumer=] can write the stream into an [=RDF Message Log=] that can be read again by a [=stream producer=] into an [=RDF Message Stream=].
 
-Note: While we do define content types for the RDF Message Log serialization formats, this does not imply that the serialization needs to be used over HTTP only. The use of alternative transport mechanisms is equally valid and encouraged.
-
 ## N-Triples, N-Quads, Turtle and TriG ## {#turtle}
 
 The RDF serializations are either way being revised in the upcoming RDF 1.2 specification, in which [version labels](https://www.w3.org/TR/rdf12-concepts/#defined-version-labels) are proposed.
 This is a proposal to the working group to include this concept by including yet another `content-type` directive as follows: `Content-Type: application/trig; version=1.2; messages=rdfm`.
 This indicates that the messages are following this spec in this HTTP Response. Clients that do not rely on [=RDF Messages=] can still interpret the response as regular RDF 1.2 data.
+
+Note: While we do define content types for the RDF Message Log serialization formats, this does not imply that the serialization needs to be used over HTTP only. The use of alternative transport mechanisms is equally valid and encouraged.
 
 When the `content-type` flagged the support for messages, and a parser is in message mode, it MUST:
  1. Consider every triple in the document as part of an [=RDF Message=]. The document does not need to start with a delimiter. If it does start with a delimiter, the content after the delimiter is part of the first message and the document did not start with an empty message.
@@ -107,7 +107,7 @@ When the `content-type` flagged the support for messages, and a parser is in mes
 
 The delimiter is a comment in the document that matches this regex: `/^\s*@message/`.
 
-Issue: Should we allow repeated `BASE` and `PREFIX` directives in Turtle / TriG RDF Message Logs? Should they override the previously encountered directives? This may require additional work in the parser.
+Note: Repeated `@prefix` and `PREFIX` directives are allowed in Turtle / TriG, so they are also allowed in RDF Message Logs. Subsequent prefix directives may re-map the same prefix label. The directives apply to the entire document from the point they are defined onward, not just within a single message.
 
 ## JSON-LD ## {#json-ld}
 
