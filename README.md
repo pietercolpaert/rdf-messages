@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> This repository is no longer updated. **The specification was moved to [the repository of the W3C RSP CG](https://github.com/w3c-cg/rsp),** where this work is continued.
+
 # RDF messages
 
 This proposal introduces an extra concept on top of RDF, called RDF messages, so that quads can be grouped together as an atomical unit.
